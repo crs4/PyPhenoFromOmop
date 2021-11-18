@@ -1,3 +1,17 @@
 Requirement: A Postgresql db filled with data in OMOP CDR format
-Scope: the program creates a phenopacket for a given patientid
+Scope: the program creates a phenopacket for a given patientid and writes it on a specified output file (default pheno.output )
+optional arguments:
+  -h, --help            show this help message and exit
+  --loglevel LOGLEVEL   the logging level:DEBUG,INFO,WARNING,ERROR or CRITICAL
+  --dbname DBNAME       name of the db with omop cdr data
+  --username USERNAME   username for omop cdr db
+  --password PASSWORD   password for omop cdr db
+  --host HOST           db host
+  --port PORT           db port
+  --patient_id PATIENT_ID
+                        id of the patient
+  --myname MYNAME       phenotype creator name
+  --outputfile OUTPUTFILE
+                        phenopacket output json file
+
 example: python3 main.py --patient_id=900

@@ -1,0 +1,3 @@
+Requirement: A Postgresql db filled with data in OMOP CDR format
+Scope: the program creates a phenopacket for a given patientid
+example: python3 main.py --patient_id=900

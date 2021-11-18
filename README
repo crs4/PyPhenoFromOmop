@@ -14,4 +14,4 @@ optional arguments:
   --outputfile OUTPUTFILE
                         phenopacket output json file
 
-example: python3 main.py --patient_id=900
+example: python3 main.py --dbname=synthea10 --username=postgres --password=lollipop --host=172.23.0.2 --port=5432 --loglevel=INFO --myname=JohnDoe --patient_id=900

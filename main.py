@@ -126,7 +126,7 @@ def createDictIndividual(mydict,vsdict):
 	if('taxonomy_id' in mydict):
 		idict['taxonomy']={'id':mydict['taxonomy_id'],'label':mydict['taxonomy_label']} 
 
-	if('vital_status' in mydict):
+	if('vital_status' in mydict and mydict['vital_status']!=0):
 		tempdict={}
 		if('status' in vsdict):
 			tempdict={}
@@ -199,18 +199,18 @@ def createPhenoIndividual(individualdict):
 		individualdict['date_of_birth']=Timestamp(seconds=convert_time_toseconds(individualdict['date_of_birth']))
 	if('time_at_last_encounter' in individualdict):
 		individualdict['time_at_last_encounter']=TimeElement(timestamp=Timestamp(seconds=convert_time_toseconds(individualdict['time_at_last_encounter'])))
-	if('time_of_death' in individualdict['vital_status']):
-		individualdict['vital_status']['time_of_death']=TimeElement(timestamp=Timestamp(seconds=convert_time_toseconds(individualdict['vital_status']['time_of_death'])))
 	if('taxonomy' in individualdict):
 		tx=OntologyClass(id=individualdict['taxonomy']['id'],label=individualdict['taxonomy']['label'])
 		individualdict['taxonomy']=tx	
 #vital status part
-	if('cause_of_death' in individualdict['vital_status']):
-		cd=OntologyClass(id=individualdict['vital_status']['cause_of_death']['id'], label=individualdict['vital_status']['cause_of_death']['label'])
-		individualdict['vital_status']['cause_of_death']=cd
-	vs=VitalStatus(**individualdict['vital_status'])
-
-	individualdict['vital_status']=vs
+	if('vital_status' in individualdict):
+		if('time_of_death' in individualdict['vital_status']):
+			individualdict['vital_status']['time_of_death']=TimeElement(timestamp=Timestamp(seconds=convert_time_toseconds(individualdict['vital_status']['time_of_death'])))
+		if('cause_of_death' in individualdict['vital_status']):
+			cd=OntologyClass(id=individualdict['vital_status']['cause_of_death']['id'], label=individualdict['vital_status']['cause_of_death']['label'])
+			individualdict['vital_status']['cause_of_death']=cd
+		vs=VitalStatus(**individualdict['vital_status'])
+		individualdict['vital_status']=vs
 	
 	logging.debug(f'{individualdict}')
 	return Individual(**individualdict)
@@ -247,11 +247,12 @@ def createMetadata(myname):
 	md['name']=	'human phenotype ontology'
 	md['url']='http://purl.obolibrary.org/obo/hp.owl'
 	md['version']='2018-03-08'
-	md['name_space_prefix']='HP'
+	md['namespace_prefix']='HP'
 	md['iri_prefix']='hp'
 	mdr.append(md)
 	metadata['resources']= mdr     
 	metadata['phenopacket_schema_version']='2.0'
+	logging.debug(f'metadata: {metadata}')
 	return metadata
 
 def createPheno(myid,meta_data,subject=None,phenotypic_features=None,measurements=None,biosamples=None,interpretations=None,diseases=None,medical_actions=None,files=None):
@@ -273,6 +274,7 @@ def createPheno(myid,meta_data,subject=None,phenotypic_features=None,measurement
 		pheno['medical_actions']=medical_actions
 	if(files != None):
 		pheno['files']=files
+	pheno['meta_data']=meta_data
 
 	return Phenopacket(**pheno)
 
@@ -322,6 +324,8 @@ def main():
 	port=args.port
 	print(f'Connecting to db={dbname} host={host} port={port} with username={username} password={password}')
 	print(f'Chosen Patient={patient_id}')
+	logging.info(f'Connecting to db={dbname} host={host} port={port} with username={username} password={password}')
+	logging.info(f'Chosen Patient={patient_id}')
 
 	conn = get_postgres_connection(dbname,username,password,host,port)
 
@@ -339,17 +343,19 @@ def main():
 
 	logging.debug(f'mydict {mydict}')
 
-	#Get Vital Status records
-	cur = conn.cursor()
-	cur.execute(get_vitalstatus_query(patient_id))
-	records = cur.fetchall()
+	vsdict={}
+	if(mydict['vital_status']!=0):
+		#Get Vital Status records
+		cur = conn.cursor()
+		cur.execute(get_vitalstatus_query(patient_id))
+		records = cur.fetchall()
 
-	logging.debug(f'Vital Status:records for patient {patient_id} =\n {records}')
+		logging.debug(f'Vital Status:records for patient {patient_id} =\n {records}')
 
 
-	vsdict=parse_VitalStatus(records)
+		vsdict=parse_VitalStatus(records)
 
-	logging.debug(f'Vital Status dict {vsdict}')
+		logging.debug(f'Vital Status dict {vsdict}')
 
 	#Arrange dict for Pheno
 
@@ -385,9 +391,11 @@ def main():
 
 	#Write Pheno to outputfile
 	ijson= MessageToJson(pheno)
+	logging.debug(f'pheno json: {ijson}')
 	with open(outputfile,'w') as of:
 		of.write(ijson)
 	print(f'phenopacket written in file {outputfile}')
+	logging.info(f'phenopacket written in file {outputfile}')
 
 if __name__ == '__main__':
 	main()

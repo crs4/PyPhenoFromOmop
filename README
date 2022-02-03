@@ -6,8 +6,8 @@ optional arguments:
   --dbname DBNAME       name of the db with omop cdr data
   --username USERNAME   username for omop cdr db
   --password PASSWORD   password for omop cdr db
-  --host HOST           db host
-  --port PORT           db port
+  --host HOST           db host (if a container is used and port 5432 is exported the host where the db port is exported )
+  --port PORT           db port (if a container is used and port 5432 is exported the db port exported from the container)
   --patient_id PATIENT_ID
                         id of the patient
   --myname MYNAME       phenotype creator name
